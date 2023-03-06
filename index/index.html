@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="app">
+        <div>請輸入員工編號:<input type="text" v-model="txtSelect" placeholder="請輸入員編"> <input type="button" class="btn btn-info" value="查詢" @click="Search" /> <input type="button" class="btn btn-info" value="取消查詢" @click="CancelSearch" /></div>
+        <br/>
+        <table class="table table-bordered" >
+            <thead>
+                <tr>
+                    <th class="text-center">#</th>
+                    <th class="text-center">員工編號</th>
+                    <th class="text-center">員工姓名</th>
+                    <th class="text-center">分機</th>
+                    <th class="text-center">功能 <input type="button" value="新增" class="btn btn-primary" :disabled="isInsert" @click="Insert" ></th>
+                </tr>
+            </thead>
+            <tbody>
+                <template v-for="(item,index) in selectList" :key="index">
+                    <tr>
+                        <td class="text-center">{{index+1}}</td>
+                        <td class="text-center">{{item.EmpNo}}</td>
+                        <td class="text-center">{{item.Name}}</td>
+                        <td class="text-center">{{item.Ext}}</td>
+                        <td class="text-center">
+                            <input type="button" class="btn btn-warning" value="編輯" @click="Update(item)" :disabled="isInsert" /> <input type="button" class="btn btn-danger" value="刪除" @click="Del(index+1)" :disabled="isInsert || isUpdate" />
+                        </td>
+                    </tr>
+                </template>
+                <template v-if="isInsert">
+                    <tr>
+                        <td class="text-center">{{insertIndex}}</td>
+                        <td class="text-center"><input type="text" v-model="txtEmpNo" /></td>
+                        <td class="text-center"><input type="text" v-model="txtName" /></td>
+                        <td class="text-center"><input type="text" v-model="txtExt" /></td>
+                        <td class="text-center">
+                            <input type="button" class="btn btn-success" value="儲存" @click="SaveInsert" /> <input type="button" class="btn btn-danger" value="取消" @click="CancelInsert"  />
+                        </td>
+                    </tr>
+                </template>
+            </tbody>
+        </table>
+        
+        <br/>
+        <table v-if="isUpdate" class="table table-borded">
+            <thead>
+                <tr>
+                    <th class="text-center">員工編號</th>
+                    <th class="text-center">員工姓名</th>
+                    <th class="text-center">分機</th>
+                    <th class="text-center">功能</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="text-center"><input type="text" v-model="arr[0]" disabled="disabled" ></td>
+                    <td class="text-center"><input type="text" v-model="arr[1]" ></td>
+                    <td class="text-center"><input type="text" v-model="arr[2]" ></td>
+                    <td class="text-center"><input type="button" class="btn btn-warning"  value="儲存" @click="SaveUpdate(arr)" /> <input type="button" class="btn btn-danger"  value="取消" @click="CancelUpdate" /></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+
+    <script type="module">
+        import {createApp,ref,reactive,computed} from './vue.js'
+        //import UpdateForm from './update-form.js'
+        const setting = {
+        //     components:{
+        //         UpdateForm
+        //     },
+            setup() {
+                let emplist = reactive([
+                    {EmpNo:'FG1945' , Name:'aaa' , Ext:1234},
+                    {EmpNo:'CR8992' , Name:'bbb' , Ext:2345},
+                    {EmpNo:'EH9048' , Name:'ccc' , Ext:3456}
+                ])
+
+                //查詢
+                let txtSelect = ref('')
+                let isSelect = ref(false)
+
+                const Search = () =>{
+                    isSelect.value = true
+                }
+
+                let resultList = reactive([])
+                const selectList = computed(()=>{
+                    if(isSelect.value){
+                        resultList = emplist.filter(item=>item.EmpNo.toLowerCase().includes(txtSelect.value.toLowerCase())) 
+                        isSelect.value = false
+                        return resultList
+                    }
+                    else {
+                        return emplist
+                    }
+                })
+
+                //取消查詢
+                const CancelSearch = () =>{
+                    txtSelect.value=""
+                }
+
+
+                //刪除
+                const Del = (index) =>{
+                    let result =  confirm("確定刪除?")
+                    if(result){
+                        console.log("result :"+result)
+                        emplist.splice(index-1,1) // .splice(起始的索引位置,刪除幾個)
+                    }
+                    else{
+
+                    }
+                }
+
+                
+                //新增
+                let isInsert = ref(false)
+                let insertIndex = ref(emplist.length+1)
+                let txtEmpNo = ref('')
+                let txtName = ref('')
+                let txtExt = ref('')
+
+                const Insert = () =>{
+                    isInsert.value = true
+                }
+
+                //儲存新增
+                const SaveInsert = () =>{
+                    if(txtEmpNo.value==''|| txtName.value==''||txtExt.value==''){
+                        alert('請將資料填寫完整')
+                    }
+                    else{
+                        emplist.push({EmpNo:txtEmpNo.value,Name:txtName.value,Ext:txtExt.value})
+                        CancelInsert()
+                    }
+                }
+
+                //取消新增
+                const CancelInsert = () =>{
+                    isInsert.value = false
+                    txtEmpNo.value=''
+                    txtName.value=''
+                    txtExt.value=''
+                }
+
+
+                //編輯
+                let isUpdate = ref(false)
+                isUpdate.value = false
+                let arr=reactive([])
+
+                const Update = (item) =>{
+                    isUpdate.value=true
+                    console.log(item)
+                    arr[0]=item.EmpNo
+                    arr[1]=item.Name
+                    arr[2]=item.Ext
+                }
+
+                const CancelUpdate = () =>{
+                    isUpdate.value=false
+                }
+
+                const SaveUpdate = (arr) =>{
+                    isUpdate.value=false
+                    emplist.filter((item)=>{
+                        if(arr[0] == item.EmpNo){
+                            item.Name = arr[1]
+                            item.Ext=arr[2]
+                        }
+                    })
+                }
+
+
+
+
+                return{
+                    emplist,
+                    Del,
+                    selectList,
+                    Search,CancelSearch,
+                    txtSelect,
+                    insertIndex,isInsert,Insert,
+                    txtEmpNo,txtName,txtExt,
+                    SaveInsert,CancelInsert,
+                    arr,isUpdate,Update,CancelUpdate,SaveUpdate
+                }
+            },
+
+            
+        }
+
+        const app = createApp(setting)
+        app.mount('#app')
+    </script>
+</body>
+</html>
